@@ -1,0 +1,165 @@
+import tkinter as tk  # Importar tkinter para la interfaz gráfica
+from tkinter import messagebox  # Importar messagebox para mostrar mensajes de error
+from PIL import Image, ImageTk  # Importar PIL para manejar imágenes
+import csv  # Importar csv para manejar archivos CSV
+import os  # Importar os para operaciones del sistema como verificar archivos
+
+def calcular_imc():
+    try:
+        # Obtener los valores de los campos de entrada
+        peso = float(entry_peso.get())
+        altura = float(entry_altura.get())
+        edad = int(entry_edad.get())
+        sexo = var_sexo.get()
+
+        # Coeficientes para ajustar el IMC según el sexo y la edad
+        ks = 1.0 if sexo == 'Hombre' else 1.1
+        ka = 1 + 0.01 * (edad - 25)
+        
+        # Cálculo del IMC ajustado
+        imc = peso / (altura ** 2) * ks * ka
+        label_resultado.config(text=f'IMC: {imc:.2f}')
+        categoria_imc(imc)
+    except ValueError:
+        messagebox.showerror('Error', 'Por favor, ingrese valores válidos.')
+
+def categoria_imc(imc):
+    # Determinar la categoría del IMC y ajustar el color de fondo del label correspondiente
+    if imc < 18.5:
+        categoria = 'Bajo peso'
+        color = 'lightblue'
+    elif 18.5 <= imc < 24.9:
+        categoria = 'Peso normal'
+        color = 'lightgreen'
+    elif 25 <= imc < 29.9:
+        categoria = 'Sobrepeso'
+        color = 'yellow'
+    else:
+        categoria = 'Obesidad'
+        color = 'red'
+    label_categoria.config(text=f'Categoría: {categoria}', bg=color)
+
+def guardar_datos():
+    nombre = entry_nombre.get()
+    if not nombre:
+        messagebox.showerror('Error', 'Por favor, ingrese el nombre del paciente.')
+        return
+    
+    try:
+        peso = float(entry_peso.get())
+        altura = float(entry_altura.get())
+        edad = int(entry_edad.get())
+        sexo = var_sexo.get()
+
+        ks = 1.0 if sexo == 'Hombre' else 1.1
+        ka = 1 + 0.01 * (edad - 25)
+        
+        imc = peso / (altura ** 2) * ks * ka
+
+        # Verificar si el archivo CSV ya existe
+        file_exists = os.path.isfile('datos_imc.csv')
+
+        # Abrir el archivo CSV en modo de añadir
+        with open('datos_imc.csv', 'a', newline='') as file:
+            writer = csv.writer(file)
+            if not file_exists:
+                # Escribir la cabecera si el archivo no existía
+                writer.writerow(['Nombre', 'Peso', 'Altura', 'Edad', 'Sexo', 'IMC', 'Categoría'])
+            # Escribir los datos del paciente
+            writer.writerow([nombre, peso, altura, edad, sexo, imc, label_categoria.cget("text").split(": ")[1]])
+
+        messagebox.showinfo('Guardado', 'Datos guardados en datos_imc.csv')
+    except ValueError:
+        messagebox.showerror('Error', 'Por favor, ingrese valores válidos.')
+
+app = tk.Tk()
+app.title('Cálculo de IMC')
+
+# Configuración de la ventana principal
+app.resizable(False, False)
+
+# Frame para centrar los widgets
+frame = tk.Frame(app, bg='white')
+frame.pack(pady=20, padx=20)
+
+# Cargar y redimensionar la imagen para el logo o decoración
+logo_img_path = "C:/Users/alcon/OneDrive/Pictures/Saved Pictures/Fondo.png"
+if os.path.exists(logo_img_path):
+    logo_img = Image.open(logo_img_path)
+    logo_img = logo_img.resize((200, 200), Image.Resampling.LANCZOS)
+    logo_photo = ImageTk.PhotoImage(logo_img)
+    label_logo = tk.Label(frame, image=logo_photo, bg='white')
+    label_logo.grid(row=0, column=0, columnspan=2, pady=10)
+else:
+    tk.Label(frame, text="Logo no encontrado", bg='white').grid(row=0, column=0, columnspan=2, pady=10)
+
+# Cargar y redimensionar las imágenes para los botones
+calcular_img_path = "C:/Users/alcon/OneDrive/Pictures/Saved Pictures/calcular.png"
+guardar_img_path = "C:/Users/alcon/OneDrive/Pictures/Saved Pictures/guardar.png"
+
+calcular_photo = guardar_photo = None
+
+if os.path.exists(calcular_img_path):
+    calcular_img = Image.open(calcular_img_path)
+    calcular_img = calcular_img.resize((50, 50), Image.Resampling.LANCZOS)
+    calcular_photo = ImageTk.PhotoImage(calcular_img)
+
+if os.path.exists(guardar_img_path):
+    guardar_img = Image.open(guardar_img_path)
+    guardar_img = guardar_img.resize((50, 50), Image.Resampling.LANCZOS)
+    guardar_photo = ImageTk.PhotoImage(guardar_img)
+
+# Configuración de fuente y estilo
+font_italic = ("Helvetica", 12, "italic")
+
+# Crear el resto de widgets en el frame
+tk.Label(frame, text='Nombre:', bg='white', font=font_italic).grid(row=1, column=0, padx=10, pady=5, sticky='e')
+entry_nombre = tk.Entry(frame, font=font_italic, bg='lightgreen')
+entry_nombre.grid(row=1, column=1, padx=10, pady=5)
+
+tk.Label(frame, text='Peso (kg):', bg='white', font=font_italic).grid(row=2, column=0, padx=10, pady=5, sticky='e')
+entry_peso = tk.Entry(frame, font=font_italic, bg='lightgreen')
+entry_peso.grid(row=2, column=1, padx=10, pady=5)
+
+tk.Label(frame, text='Altura (m):', bg='white', font=font_italic).grid(row=3, column=0, padx=10, pady=5, sticky='e')
+entry_altura = tk.Entry(frame, font=font_italic, bg='lightgreen')
+entry_altura.grid(row=3, column=1, padx=10, pady=5)
+
+tk.Label(frame, text='Edad (años):', bg='white', font=font_italic).grid(row=4, column=0, padx=10, pady=5, sticky='e')
+entry_edad = tk.Entry(frame, font=font_italic, bg='lightgreen')
+entry_edad.grid(row=4, column=1, padx=10, pady=5)
+
+tk.Label(frame, text='Sexo:', bg='white', font=font_italic).grid(row=5, column=0, padx=10, pady=5, sticky='e')
+var_sexo = tk.StringVar(value='Hombre')
+tk.Radiobutton(frame, text='Hombre', variable=var_sexo, value='Hombre', bg='white', font=font_italic).grid(row=5, column=1, sticky='w', padx=10)
+tk.Radiobutton(frame, text='Mujer', variable=var_sexo, value='Mujer', bg='white', font=font_italic).grid(row=5, column=1, sticky='e', padx=10)
+
+# Botones con imágenes redimensionadas
+if calcular_photo:
+    tk.Button(frame, image=calcular_photo, command=calcular_imc, font=font_italic, cursor="hand2", bg='lightblue').grid(row=6, column=0, columnspan=2, pady=10)
+else:
+    tk.Button(frame, text="Calcular", command=calcular_imc, font=font_italic, cursor="hand2", bg='lightblue').grid(row=6, column=0, columnspan=2, pady=10)
+
+label_resultado = tk.Label(frame, text='IMC: ', bg='white', font=font_italic)
+label_resultado.grid(row=7, column=0, columnspan=2, pady=5)
+
+label_categoria = tk.Label(frame, text='Categoría: ', width=20, bg='white', font=font_italic)
+label_categoria.grid(row=8, column=0, columnspan=2, pady=5)
+
+if guardar_photo:
+    tk.Button(frame, image=guardar_photo, command=guardar_datos, font=font_italic, cursor="hand2", bg='lightgreen').grid(row=9, column=0, columnspan=2, pady=10)
+else:
+    tk.Button(frame, text="Guardar", command=guardar_datos, font=font_italic, cursor="hand2", bg='lightgreen').grid(row=9, column=0, columnspan=2, pady=10)
+
+# Ajustar el tamaño de la ventana según el contenido
+def ajustar_ventana():
+    app.update_idletasks()
+    ancho = frame.winfo_reqwidth() + 40  # Añadir márgenes
+    alto = frame.winfo_reqheight() + 40  # Añadir márgenes
+    app.geometry(f"{ancho}x{alto}")
+
+# Vincular la función de ajuste de ventana a los cambios en el contenido del frame
+frame.bind("<Configure>", lambda e: ajustar_ventana())
+
+ajustar_ventana()
+app.mainloop()
